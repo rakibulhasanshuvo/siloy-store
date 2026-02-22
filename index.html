@@ -133,9 +133,9 @@
     <!-- React and Dependencies -->
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
-    <script src="https://unpkg.com/history@5/umd/history.development.js"></script>
-    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
-    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
+    <script src="https://unpkg.com/history@5/umd/history.production.min.js"></script>
+    <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
+    <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
 </head>
 
@@ -248,8 +248,23 @@
                         // Check if it's an HTML page (meaning it's not published correctly)
                         if (csvText.trim().startsWith('<')) throw new Error("Google Sheet is not published to the web. Please follow Step 3 of the instructions.");
 
-                        // Basic CSV Parser
-                        const lines = csvText.split('\n').filter(line => line.trim() !== '');
+                        // RFC-compliant CSV splitter: handles newlines inside quoted fields
+                        const lines = [];
+                        let currentLine = '', inQuotes = false;
+                        for (let i = 0; i < csvText.length; i++) {
+                            const ch = csvText[i];
+                            if (ch === '"') {
+                                inQuotes = !inQuotes;
+                                currentLine += ch;
+                            } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
+                                if (ch === '\r' && csvText[i + 1] === '\n') i++; // skip \r\n
+                                if (currentLine.trim()) lines.push(currentLine);
+                                currentLine = '';
+                            } else {
+                                currentLine += ch;
+                            }
+                        }
+                        if (currentLine.trim()) lines.push(currentLine);
                         if (lines.length < 2) throw new Error("Google Sheet is empty or missing data.");
 
                         const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
@@ -323,13 +338,15 @@
             };
 
             const updateQuantity = (id, size, change) => {
-                setCart(prev => prev.map(item => {
-                    if (item.id === id && item.size === size) {
-                        const newQty = Math.max(1, item.qty + change);
-                        return { ...item, qty: newQty };
-                    }
-                    return item;
-                }));
+                setCart(prev => {
+                    return prev.map(item => {
+                        if (item.id === id && item.size === size) {
+                            const newQty = item.qty + change;
+                            return { ...item, qty: newQty };
+                        }
+                        return item;
+                    }).filter(item => item.qty > 0);
+                });
             };
 
             const toggleCart = () => setIsCartOpen(!isCartOpen);
@@ -356,14 +373,21 @@
 
             const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
 
-            // Load saved data on mount
+            // Load saved data on mount (with error handling for corrupted JSON)
             useEffect(() => {
-                const savedWishlist = localStorage.getItem('siloy_wishlist');
-                const savedHistory = localStorage.getItem('siloy_history');
-                const savedCart = localStorage.getItem('siloy_cart');
-                if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
-                if (savedHistory) setRecentlyViewed(JSON.parse(savedHistory));
-                if (savedCart) setCart(JSON.parse(savedCart));
+                try {
+                    const savedWishlist = localStorage.getItem('siloy_wishlist');
+                    const savedHistory = localStorage.getItem('siloy_history');
+                    const savedCart = localStorage.getItem('siloy_cart');
+                    if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+                    if (savedHistory) setRecentlyViewed(JSON.parse(savedHistory));
+                    if (savedCart) setCart(JSON.parse(savedCart));
+                } catch (err) {
+                    console.error('Failed to load saved data, resetting:', err);
+                    localStorage.removeItem('siloy_wishlist');
+                    localStorage.removeItem('siloy_history');
+                    localStorage.removeItem('siloy_cart');
+                }
             }, []);
 
             // Save data on change
@@ -397,6 +421,21 @@
             const { isSearchOpen, toggleSearch, products } = useAppContext();
             const [query, setQuery] = useState('');
             const navigate = useNavigate();
+            const inputRef = useRef(null);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.key === 'Escape' && isSearchOpen) toggleSearch();
+                };
+                window.addEventListener('keydown', handleKeyDown);
+
+                if (isSearchOpen && inputRef.current) {
+                    // Timeout helps mobile browsers focus reliably after keyboard events
+                    setTimeout(() => inputRef.current.focus(), 100);
+                }
+
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, [isSearchOpen, toggleSearch]);
 
             if (!isSearchOpen) return null;
 
@@ -407,7 +446,7 @@
                     <div className="flex items-center justify-between p-4 md:p-8 border-b border-slate-100 dark:border-slate-800">
                         <div className="flex-1 max-w-3xl mx-auto flex items-center gap-4">
                             <span className="material-symbols-outlined text-3xl text-slate-400">search</span>
-                            <input autoFocus value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search for borkhas, 3-pieces, styles..." className="w-full bg-transparent text-2xl md:text-4xl font-black outline-none placeholder:text-slate-300 dark:placeholder:text-slate-700 text-slate-900 dark:text-white" />
+                            <input ref={inputRef} value={query} onChange={(e) => setQuery(e.target.value)} type="text" placeholder="Search for borkhas, 3-pieces, styles..." className="w-full bg-transparent text-2xl md:text-4xl font-black outline-none placeholder:text-slate-300 dark:placeholder:text-slate-700 text-slate-900 dark:text-white" />
                         </div>
                         <button onClick={toggleSearch} className="p-3 bg-slate-100 dark:bg-slate-800 rounded-full hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors ml-4 shrink-0">
                             <span className="material-symbols-outlined">close</span>
@@ -577,7 +616,8 @@
                     msg += `- ${item.name} (SKU: ${item.sku})\n  Size: ${item.size} | Qty: ${item.qty} | ৳${item.price * item.qty}\n`;
                 });
                 msg += `\n*Total: ৳${cartTotal}*\n\nPlease confirm availability.`;
-                return `https://wa.me/${STORE_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+                const cleanNum = STORE_CONFIG.WHATSAPP_NUMBER.replace('+', '');
+                return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
             };
 
             return (
@@ -850,7 +890,7 @@
             const categories = ['All', 'borkha', '3-piece', 'hijab', 'luxury'];
 
             const displayProducts = products.filter(p => {
-                const matchesFilter = filter === 'All' || p.category === filter;
+                const matchesFilter = filter === 'All' || p.category.toLowerCase().replace(/[\s-]/g, '') === filter.toLowerCase().replace(/[\s-]/g, '');
                 const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
                 return matchesFilter && matchesSearch;
             }).sort((a, b) => {
@@ -982,7 +1022,7 @@
                     window.scrollTo(0, 0); // smooth animation fix
                     setSelectedSize(''); // Reset sizes when product changes
                 }
-            }, [product]);
+            }, [product, addHistory]);
 
             if (!product) {
                 return (
@@ -1011,7 +1051,8 @@
                 let msg = `Hi ${STORE_CONFIG.STORE_NAME}! I have an inquiry about:\n\n- ${product.name} (SKU: ${product.sku})\n`;
                 if (selectedSize) msg += `  Size: ${selectedSize}\n`;
                 msg += `  Price: ৳${product.price}\n\nIs this available? I'd like to place an order.`;
-                return `https://wa.me/${STORE_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`;
+                const cleanNum = STORE_CONFIG.WHATSAPP_NUMBER.replace('+', '');
+                return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
             };
 
             const handleMouseMove = (e) => {
