@@ -38,6 +38,7 @@
         body {
             font-family: 'Inter', sans-serif;
             -webkit-tap-highlight-color: transparent;
+            min-height: max(884px, 100dvh);
         }
 
         .hide-scrollbar::-webkit-scrollbar {
@@ -90,8 +91,42 @@
             }
         }
 
+        @keyframes cartPop {
+            0% {
+                transform: scale(1);
+            }
+
+            50% {
+                transform: scale(1.4);
+            }
+
+            100% {
+                transform: scale(1);
+            }
+        }
+
+        .animate-cart-pop {
+            animation: cartPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
         .animate-spring-drawer {
             animation: slideInRight 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.1) forwards;
+        }
+
+        .scroll-top-btn {
+            position: fixed;
+            right: 20px;
+            bottom: 100px;
+            z-index: 40;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .scroll-top-btn.visible {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(-10px);
         }
     </style>
 
@@ -102,20 +137,15 @@
     <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.development.js"></script>
     <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.development.js"></script>
     <script src="https://unpkg.com/babel-standalone@6/babel.min.js"></script>
-    <style>
-        body {
-            min-height: max(884px, 100dvh);
-        }
-    </style>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useContext, createContext } = React;
+        const { useState, useEffect, useContext, createContext, useRef } = React;
         const { createRoot } = ReactDOM;
-        const { MemoryRouter, Routes, Route, Link, useNavigate, useLocation, useParams } = ReactRouterDOM;
+        const { HashRouter, Routes, Route, Link, useNavigate, useLocation, useParams } = ReactRouterDOM;
 
         // ============================================================
         //  ⚙️  STORE CONFIGURATION — Edit this block to customize
@@ -137,18 +167,30 @@
 
         const ProductScroller = ({ title, products }) => {
             const navigate = useNavigate();
+            const scrollerRef = useRef(null);
+
             if (!products || products.length === 0) return null;
+
+            const scroll = (direction) => {
+                if (scrollerRef.current) {
+                    const scrollAmount = 300;
+                    scrollerRef.current.scrollBy({
+                        left: direction === 'left' ? -scrollAmount : scrollAmount,
+                        behavior: 'smooth'
+                    });
+                }
+            };
 
             return (
                 <div className="mt-12 md:mt-16 w-full">
                     <div className="flex items-center justify-between mb-6 px-4 md:px-0">
                         <h3 className="text-xl md:text-2xl font-black uppercase tracking-tighter italic">{title}</h3>
                         <div className="flex gap-2">
-                            <button className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:border-primary text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-sm">arrow_back</span></button>
-                            <button className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:border-primary text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-sm">arrow_forward</span></button>
+                            <button onClick={() => scroll('left')} className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:border-primary text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-sm">arrow_back</span></button>
+                            <button onClick={() => scroll('right')} className="h-8 w-8 rounded-full border border-slate-200 flex items-center justify-center hover:border-primary text-slate-400 hover:text-primary transition-colors"><span className="material-symbols-outlined text-sm">arrow_forward</span></button>
                         </div>
                     </div>
-                    <div className="flex gap-4 overflow-x-auto hide-scrollbar px-4 md:px-0 snap-x pb-4">
+                    <div ref={scrollerRef} className="flex gap-4 overflow-x-auto hide-scrollbar px-4 md:px-0 snap-x pb-4">
                         {products.map(p => (
                             <div key={p.id} onClick={() => navigate(`/product/${p.id}`)} className="group cursor-pointer snap-start shrink-0 w-[160px] md:w-[220px]">
                                 <div className="aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3 relative">
@@ -184,6 +226,7 @@
             const [wishlist, setWishlist] = useState([]);
             const [recentlyViewed, setRecentlyViewed] = useState([]);
             const [isSearchOpen, setIsSearchOpen] = useState(false);
+            const [isCartPopping, setIsCartPopping] = useState(false);
 
             // --- Google Sheets Integration ---
             const sheetUrl = STORE_CONFIG.SHEET_URL;
@@ -252,7 +295,6 @@
                         setProducts(parsedProducts);
                     } catch (err) {
                         console.error("Error loading products:", err);
-                        setError("Failed to load live data. Showing default products.");
                         setProducts(productsData); // Fallback to hardcoded array
                     } finally {
                         setIsLoading(false);
@@ -272,6 +314,8 @@
                     return [...prev, { ...product, size, qty }];
                 });
                 setIsCartOpen(true);
+                setIsCartPopping(true);
+                setTimeout(() => setIsCartPopping(false), 400);
             };
 
             const removeFromCart = (id, size) => {
@@ -337,7 +381,8 @@
                     isCartOpen, toggleCart, setIsCartOpen,
                     wishlist, setWishlist, toggleWishlist,
                     recentlyViewed, addHistory,
-                    isSearchOpen, toggleSearch, setIsSearchOpen
+                    isSearchOpen, toggleSearch, setIsSearchOpen,
+                    isCartPopping
                 }}>
                     {children}
                 </AppContext.Provider>
@@ -411,12 +456,13 @@
 
         const BottomNav = () => {
             const location = useLocation();
-            const { toggleCart, cartCount } = useAppContext();
+            const { toggleCart, cartCount, wishlist } = useAppContext();
+            const wishlistCount = wishlist.length;
             const navItems = [
                 { path: '/', label: 'Home', icon: 'home' },
                 { path: '/shop', label: 'Shop', icon: 'storefront' },
                 { isAction: true, action: toggleCart, label: 'Cart', icon: 'shopping_bag', badge: cartCount },
-                { path: '/about', label: 'About', icon: 'info' },
+                { path: '/wishlist', label: 'Saved', icon: 'favorite', badge: wishlistCount },
                 { path: '/contact', label: 'Contact', icon: 'call' },
             ];
 
@@ -441,6 +487,9 @@
                             <Link key={idx} to={item.path} className={`flex flex-col items-center gap-1 ${isActive ? 'text-primary' : 'text-slate-400'}`}>
                                 <span className={`material-symbols-outlined ${isActive ? 'fill-1' : ''}`}>{item.icon}</span>
                                 <span className="text-[10px] font-bold uppercase tracking-wider">{item.label}</span>
+                                {item.badge > 0 && !item.isAction && (
+                                    <span className="absolute -top-1 -right-2 h-3 w-3 bg-primary text-white text-[8px] flex items-center justify-center rounded-full font-bold">{item.badge}</span>
+                                )}
                             </Link>
                         );
                     })}
@@ -451,7 +500,8 @@
         const TopNav = () => {
             const navigate = useNavigate();
             const location = useLocation();
-            const { cartCount, toggleCart, toggleSearch } = useAppContext();
+            const { cartCount, toggleCart, toggleSearch, wishlist, isCartPopping } = useAppContext();
+            const wishlistCount = wishlist.length;
 
             const navLeft = [
                 { path: '/shop', label: 'Collection' },
@@ -464,7 +514,7 @@
 
             return (
                 <nav className="hidden md:block sticky top-0 z-50 w-full bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl border-b border-slate-100 dark:border-slate-900">
-                    <div className="max-w-7xl mx-auto px-8 py-5 flex items-center justify-between relative">
+                    <div className="max-w-7xl mx-auto px-8 py-5 grid grid-cols-[1fr_auto_1fr] items-center gap-8">
                         {/* Left Menu */}
                         <div className="flex items-center gap-10">
                             {navLeft.map((item) => (
@@ -474,8 +524,8 @@
                             ))}
                         </div>
 
-                        {/* Absolutely Centered Logo */}
-                        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
+                        {/* Center Logo */}
+                        <div className="flex items-center gap-3 cursor-pointer group" onClick={() => navigate('/')}>
                             <div className="bg-primary text-white p-2.5 rounded-2xl rotate-3 group-hover:rotate-0 transition-transform">
                                 <span className="material-symbols-outlined text-2xl italic">factory</span>
                             </div>
@@ -483,22 +533,27 @@
                         </div>
 
                         {/* Right Actions */}
-                        <div className="flex items-center gap-8">
-                            <div className="hidden lg:flex items-center gap-6">
+                        <div className="flex items-center justify-end gap-6">
+                            <div className="hidden lg:flex items-center gap-8">
                                 {navRight.map((item) => (
                                     <Link key={item.path} to={item.path} className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-all hover:text-primary ${location.pathname === item.path ? 'text-primary' : 'text-slate-500'}`}>
                                         {item.label}
                                     </Link>
                                 ))}
+                                <Link to="/wishlist" className={`text-[11px] font-bold uppercase tracking-[0.3em] transition-all hover:text-primary relative ${location.pathname === '/wishlist' ? 'text-primary' : 'text-slate-500'}`}>
+                                    Wishlist
+                                    {wishlistCount > 0 && <span className="absolute -top-3 -right-3 h-4 w-4 bg-primary text-white text-[8px] flex items-center justify-center rounded-full font-bold">{wishlistCount}</span>}
+                                </Link>
                             </div>
-                            <div className="flex items-center gap-4">
-                                <button onClick={toggleSearch} className="text-slate-400 hover:text-primary transition-colors cursor-pointer">
-                                    <span className="material-symbols-outlined text-2xl italic">search</span>
+                            <div className="h-5 w-px bg-slate-200 dark:bg-slate-700 hidden lg:block"></div>
+                            <div className="flex items-center gap-3">
+                                <button onClick={toggleSearch} className="w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                                    <span className="material-symbols-outlined text-[22px]">search</span>
                                 </button>
-                                <button onClick={toggleCart} className="p-1 text-slate-400 hover:text-primary transition-colors relative">
-                                    <span className="material-symbols-outlined text-2xl italic">shopping_bag</span>
+                                <button onClick={toggleCart} className={`w-10 h-10 flex items-center justify-center rounded-xl text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-slate-800 transition-all relative ${isCartPopping ? 'animate-cart-pop' : ''}`}>
+                                    <span className="material-symbols-outlined text-[22px]">shopping_bag</span>
                                     {cartCount > 0 && (
-                                        <span className="absolute -top-1 -right-1 h-4 w-4 bg-primary text-white text-[9px] flex items-center justify-center rounded-full font-black animate-pulse">{cartCount}</span>
+                                        <span className="absolute top-0.5 right-0.5 h-4 w-4 bg-primary text-white text-[9px] flex items-center justify-center rounded-full font-black">{cartCount}</span>
                                     )}
                                 </button>
                             </div>
@@ -592,22 +647,37 @@
             );
         };
 
-        const Layout = ({ children, hideNav = false }) => (
-            <div className="relative flex min-h-screen w-full flex-col bg-white dark:bg-background-dark overflow-x-hidden selection:bg-primary/20">
-                {!hideNav && <TopNav />}
-                <div className="relative flex flex-col w-full min-h-[inherit]">
-                    {/* Mobile: card with shadow | Desktop: clean full-width background */}
-                    <div className="flex-1 w-full max-w-[430px] md:max-w-none mx-auto bg-white dark:bg-background-dark shadow-2xl md:shadow-none md:rounded-none overflow-hidden animate-[fadeIn_0.4s_ease-out]">
-                        <div className="md:max-w-7xl md:mx-auto">
-                            {children}
+        const Layout = ({ children, hideNav = false }) => {
+            const [showScrollTop, setShowScrollTop] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => {
+                    setShowScrollTop(window.scrollY > 400);
+                };
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            return (
+                <div className="relative flex min-h-screen w-full flex-col bg-white dark:bg-background-dark overflow-x-hidden selection:bg-primary/20">
+                    {!hideNav && <TopNav />}
+                    <div className="relative flex flex-col w-full min-h-[inherit]">
+                        {/* Mobile: card with shadow | Desktop: clean full-width background */}
+                        <div className="flex-1 w-full max-w-[430px] md:max-w-none mx-auto bg-white dark:bg-background-dark shadow-2xl md:shadow-none md:rounded-none overflow-hidden animate-[fadeIn_0.4s_ease-out]">
+                            <div className="md:max-w-7xl md:mx-auto">
+                                {children}
+                            </div>
                         </div>
+                        {!hideNav && <BottomNav />}
                     </div>
-                    {!hideNav && <BottomNav />}
+                    <CartDrawer />
+                    <SearchOverlay />
+                    <button onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} className={`scroll-top-btn bg-primary text-white p-3 rounded-2xl shadow-2xl ${showScrollTop ? 'visible' : ''}`}>
+                        <span className="material-symbols-outlined">arrow_upward</span>
+                    </button>
                 </div>
-                <CartDrawer />
-                <SearchOverlay />
-            </div>
-        );
+            );
+        };
 
         // --- Screens ---
 
@@ -694,11 +764,6 @@
                                             <div className="h-4 bg-slate-200 dark:bg-slate-800 rounded w-1/4"></div>
                                         </div>
                                     ))
-                                ) : error ? (
-                                    <div className="col-span-full py-8 text-center text-red-500 font-medium bg-red-50 dark:bg-red-900/10 rounded-2xl">
-                                        <span className="material-symbols-outlined block text-3xl mb-2">error</span>
-                                        {error}
-                                    </div>
                                 ) : (
                                     products.slice(0, 4).map((p) => (
                                         <div key={p.id} className="flex flex-col group cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
@@ -760,6 +825,27 @@
             const { products, toggleCart, cartCount, toggleSearch, toggleWishlist, wishlist, recentlyViewed, isLoading, error } = useAppContext();
             const [filter, setFilter] = useState('All');
             const [search, setSearch] = useState('');
+            const [sortBy, setSortBy] = useState('popularity');
+            const [isSortOpen, setIsSortOpen] = useState(false);
+            const sortRef = useRef(null);
+
+            const sortOptions = [
+                { value: 'popularity', label: 'Popularity', icon: 'trending_up' },
+                { value: 'price_low', label: 'Price: Low → High', icon: 'arrow_upward' },
+                { value: 'price_high', label: 'Price: High → Low', icon: 'arrow_downward' },
+                { value: 'newest', label: 'Newest First', icon: 'schedule' },
+            ];
+
+            // Close dropdown when clicking outside
+            useEffect(() => {
+                const handleClickOutside = (e) => {
+                    if (sortRef.current && !sortRef.current.contains(e.target)) {
+                        setIsSortOpen(false);
+                    }
+                };
+                document.addEventListener('mousedown', handleClickOutside);
+                return () => document.removeEventListener('mousedown', handleClickOutside);
+            }, []);
 
             const categories = ['All', 'borkha', '3-piece', 'hijab', 'luxury'];
 
@@ -767,6 +853,13 @@
                 const matchesFilter = filter === 'All' || p.category === filter;
                 const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
                 return matchesFilter && matchesSearch;
+            }).sort((a, b) => {
+                switch (sortBy) {
+                    case 'price_low': return a.price - b.price;
+                    case 'price_high': return b.price - a.price;
+                    case 'newest': return b.id - a.id;
+                    case 'popularity': default: return (b.reviews || 0) - (a.reviews || 0);
+                }
             });
 
             return (
@@ -811,9 +904,22 @@
                                         <button key={cat} onClick={() => setFilter(cat)} className={`px-4 py-2 rounded-xl border text-xs font-bold uppercase tracking-widest transition-all capitalize ${filter === cat ? 'border-primary text-primary bg-primary/5' : 'border-slate-200 text-slate-400 hover:border-primary'}`}>{cat}</button>
                                     ))}
                                 </div>
-                                <div className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-slate-200 transition-colors">
-                                    <span className="text-sm font-bold uppercase tracking-wider">Popularity</span>
-                                    <span className="material-symbols-outlined text-sm">expand_more</span>
+                                <div ref={sortRef} className="relative">
+                                    <button onClick={() => setIsSortOpen(!isSortOpen)} className="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 px-4 py-2.5 rounded-xl cursor-pointer hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors">
+                                        <span className="text-sm font-bold uppercase tracking-wider">{(sortOptions.find(o => o.value === sortBy) || {}).label || 'Sort'}</span>
+                                        <span className={`material-symbols-outlined text-sm transition-transform ${isSortOpen ? 'rotate-180' : ''}`}>expand_more</span>
+                                    </button>
+                                    {isSortOpen && (
+                                        <div className="absolute right-0 top-full mt-2 w-52 bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden z-50 animate-[slideInUp_0.2s_ease-out]">
+                                            {sortOptions.map(option => (
+                                                <button key={option.value} onClick={() => { setSortBy(option.value); setIsSortOpen(false); }} className={`w-full flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${sortBy === option.value ? 'bg-primary/10 text-primary font-bold' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'}`}>
+                                                    <span className="material-symbols-outlined text-lg">{option.icon}</span>
+                                                    {option.label}
+                                                    {sortBy === option.value && <span className="material-symbols-outlined text-primary ml-auto text-sm">check</span>}
+                                                </button>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -826,34 +932,31 @@
                                         <div className="h-5 bg-slate-200 dark:bg-slate-800 rounded w-1/3 mx-auto"></div>
                                     </div>
                                 ))
-                            ) : error ? (
-                                <div className="col-span-full py-12 text-center text-red-500 font-medium bg-red-50 dark:bg-red-900/10 rounded-3xl">
-                                    <span className="material-symbols-outlined block text-3xl mb-2">error</span>
-                                    {error}
-                                </div>
-                            ) : displayProducts.length === 0 ? (
-                                <div className="col-span-full py-12 text-center text-slate-500 font-medium bg-slate-50 dark:bg-slate-800/50 rounded-3xl">
-                                    No products found matching your search or filter.
-                                </div>
                             ) : (
-                                displayProducts.map((p) => (
-                                    <div key={p.id} className="group flex flex-col pt-2 md:pt-4">
-                                        <div className="relative aspect-[3/4] overflow-hidden rounded-2xl md:rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2 cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                                            <img alt={p.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" src={p.img} />
-                                            <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p); }} className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl backdrop-blur shadow-sm transition-all md:scale-0 md:group-hover:scale-100 ${wishlist.some(w => w.id === p.id) ? 'bg-primary text-white scale-100' : 'bg-white/80 text-primary hover:bg-primary hover:text-white'}`}>
-                                                <span className={`material-symbols-outlined text-xl italic ${wishlist.some(w => w.id === p.id) ? 'fill-1' : ''}`}>favorite</span>
-                                            </button>
-                                            {p.tag && <div className={`absolute bottom-4 left-4 rounded-xl ${p.tag === 'Best Seller' || p.tag === 'Premium' ? 'bg-orange-500' : 'bg-primary/95'} px-3 py-1 text-[10px] font-black text-white uppercase tracking-widest shadow-lg`}>{p.tag}</div>}
-                                        </div>
-                                        <div className="mt-5 px-1 flex flex-col items-center text-center cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
-                                            <h3 className="line-clamp-1 text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">{p.name}</h3>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <p className="text-xl font-black text-primary italic">৳{p.price}</p>
-                                                {p.oldPrice && <p className="text-sm font-bold text-slate-400 line-through">৳{p.oldPrice}</p>}
+                                displayProducts.length === 0 ? (
+                                    <div className="col-span-full py-12 text-center text-slate-500 font-medium bg-slate-50 dark:bg-slate-800/50 rounded-3xl">
+                                        No products found matching your search or filter.
+                                    </div>
+                                ) : (
+                                    displayProducts.map((p) => (
+                                        <div key={p.id} className="group flex flex-col pt-2 md:pt-4">
+                                            <div className="relative aspect-[3/4] overflow-hidden rounded-2xl md:rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2 cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                                                <img alt={p.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" src={p.img} />
+                                                <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p); }} className={`absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl backdrop-blur shadow-sm transition-all md:scale-0 md:group-hover:scale-100 ${wishlist.some(w => w.id === p.id) ? 'bg-primary text-white scale-100' : 'bg-white/80 text-primary hover:bg-primary hover:text-white'}`}>
+                                                    <span className={`material-symbols-outlined text-xl italic ${wishlist.some(w => w.id === p.id) ? 'fill-1' : ''}`}>favorite</span>
+                                                </button>
+                                                {p.tag && <div className={`absolute bottom-4 left-4 rounded-xl ${p.tag === 'Best Seller' || p.tag === 'Premium' ? 'bg-orange-500' : 'bg-primary/95'} px-3 py-1 text-[10px] font-black text-white uppercase tracking-widest shadow-lg`}>{p.tag}</div>}
+                                            </div>
+                                            <div className="mt-5 px-1 flex flex-col items-center text-center cursor-pointer" onClick={() => navigate(`/product/${p.id}`)}>
+                                                <h3 className="line-clamp-1 text-base font-bold text-slate-900 dark:text-slate-100 uppercase tracking-tight">{p.name}</h3>
+                                                <div className="flex items-center gap-2 mt-1">
+                                                    <p className="text-xl font-black text-primary italic">৳{p.price}</p>
+                                                    {p.oldPrice && <p className="text-sm font-bold text-slate-400 line-through">৳{p.oldPrice}</p>}
+                                                </div>
                                             </div>
                                         </div>
-                                    </div>
-                                ))
+                                    ))
+                                )
                             )}
                         </div>
 
@@ -934,9 +1037,9 @@
                             <span className="material-symbols-outlined text-slate-900 dark:text-slate-100">arrow_back_ios</span>
                         </button>
                         <h1 className="flex-1 text-center text-lg font-bold tracking-tight">Product Details</h1>
-                        <button onClick={toggleCart} className="flex items-center justify-center p-2 rounded-full hover:bg-primary/5 transition-colors relative">
+                        <button onClick={toggleCart} className={`flex items-center justify-center p-2 rounded-full hover:bg-primary/5 transition-colors relative ${isCartPopping ? 'animate-cart-pop' : ''}`}>
                             <span className="material-symbols-outlined text-slate-900 dark:text-slate-100">shopping_bag</span>
-                            {cartCount > 0 && <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white animate-pulse">{cartCount}</span>}
+                            {cartCount > 0 && <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-primary text-[10px] font-bold text-white">{cartCount}</span>}
                         </button>
                     </header>
                     <main className="pb-32 flex flex-col md:flex-row md:gap-12 md:p-12 animate-[fadeIn_0.5s_ease-out]">
@@ -1131,17 +1234,18 @@
             const navigate = useNavigate();
             const [formData, setFormData] = useState({
                 name: '',
+                phone: '',
                 interest: 'Borkhas & Abayas',
                 message: ''
             });
 
             const handleSubmit = (e) => {
                 e.preventDefault();
-                if (!formData.name || !formData.message) {
-                    alert('Please fill in both your name and message.');
+                if (!formData.name || !formData.message || !formData.phone) {
+                    alert('Please fill in name, phone, and message.');
                     return;
                 }
-                const msg = `Hi ${STORE_CONFIG.STORE_NAME}! I have a quick inquiry:\n\n*Name:* ${formData.name}\n*Interested In:* ${formData.interest}\n*Message:* ${formData.message}`;
+                const msg = `Hi ${STORE_CONFIG.STORE_NAME}! I have a quick inquiry:\n\n*Name:* ${formData.name}\n*Phone:* ${formData.phone}\n*Interested In:* ${formData.interest}\n*Message:* ${formData.message}`;
                 window.open(`https://wa.me/${STORE_CONFIG.WHATSAPP_NUMBER}?text=${encodeURIComponent(msg)}`, '_blank');
             };
 
@@ -1203,6 +1307,17 @@
                                                 className="w-full rounded-2xl border-none bg-slate-50 dark:bg-slate-800 py-4 px-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all"
                                                 placeholder="Enter your name"
                                                 type="text"
+                                                required
+                                            />
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="block text-xs font-black uppercase tracking-widest text-slate-400 px-3">Phone Number</label>
+                                            <input
+                                                value={formData.phone}
+                                                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                                                className="w-full rounded-2xl border-none bg-slate-50 dark:bg-slate-800 py-4 px-6 text-sm font-medium focus:ring-2 focus:ring-primary/20 transition-all"
+                                                placeholder="Enter your phone number"
+                                                type="tel"
                                                 required
                                             />
                                         </div>
@@ -1305,7 +1420,7 @@
         const App = () => {
             return (
                 <AppProvider>
-                    <MemoryRouter>
+                    <HashRouter>
                         <Routes>
                             <Route path="/" element={<HomeScreen />} />
                             <Route path="/shop" element={<ShopScreen />} />
@@ -1315,7 +1430,7 @@
                             <Route path="/contact" element={<ContactScreen />} />
                             <Route path="/profile" element={<ProfilePlaceholder />} />
                         </Routes>
-                    </MemoryRouter>
+                    </HashRouter>
                 </AppProvider>
             );
         };
