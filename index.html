@@ -439,7 +439,7 @@
 
             if (!isSearchOpen) return null;
 
-            const results = query ? products.filter(p => p.name.toLowerCase().includes(query.toLowerCase()) || p.category.includes(query.toLowerCase())) : [];
+            const results = query ? products.filter(p => p?.name?.toLowerCase().includes(query.toLowerCase()) || p?.category?.toLowerCase().includes(query.toLowerCase())) : [];
 
             return (
                 <div className="fixed inset-0 z-[120] flex flex-col bg-white/95 dark:bg-background-dark/95 backdrop-blur-xl animate-[fadeIn_0.2s_ease-out]">
@@ -638,8 +638,8 @@
                                     <p className="font-medium text-sm">Your bag is empty.</p>
                                 </div>
                             ) : (
-                                cart.map((item, idx) => (
-                                    <div key={idx} className="flex gap-4 items-center">
+                                cart.map((item) => (
+                                    <div key={`${item.id}-${item.size}`} className="flex gap-4 items-center">
                                         <div className="w-20 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
                                             <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
                                         </div>
@@ -691,10 +691,17 @@
             const [showScrollTop, setShowScrollTop] = useState(false);
 
             useEffect(() => {
+                let ticking = false;
                 const handleScroll = () => {
-                    setShowScrollTop(window.scrollY > 400);
+                    if (!ticking) {
+                        window.requestAnimationFrame(() => {
+                            setShowScrollTop(window.scrollY > 400);
+                            ticking = false;
+                        });
+                        ticking = true;
+                    }
                 };
-                window.addEventListener('scroll', handleScroll);
+                window.addEventListener('scroll', handleScroll, { passive: true });
                 return () => window.removeEventListener('scroll', handleScroll);
             }, []);
 
@@ -887,11 +894,11 @@
                 return () => document.removeEventListener('mousedown', handleClickOutside);
             }, []);
 
-            const categories = ['All', 'borkha', '3-piece', 'hijab', 'luxury'];
+            const categories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
 
             const displayProducts = products.filter(p => {
                 const matchesFilter = filter === 'All' || p.category.toLowerCase().replace(/[\s-]/g, '') === filter.toLowerCase().replace(/[\s-]/g, '');
-                const matchesSearch = p.name.toLowerCase().includes(search.toLowerCase());
+                const matchesSearch = p?.name?.toLowerCase().includes(search.toLowerCase());
                 return matchesFilter && matchesSearch;
             }).sort((a, b) => {
                 switch (sortBy) {
@@ -1019,7 +1026,7 @@
             useEffect(() => {
                 if (product) {
                     addHistory(product);
-                    window.scrollTo(0, 0); // smooth animation fix
+                    window.scrollTo({ top: 0, behavior: 'smooth' }); // smooth animation fix
                     setSelectedSize(''); // Reset sizes when product changes
                 }
             }, [product, addHistory]);
@@ -1039,7 +1046,8 @@
 
             const handleAddToCart = () => {
                 if (product.sizes && !selectedSize) {
-                    alert('Please select a size first.');
+                    setLocalToast(true);
+                    setTimeout(() => setLocalToast(false), 2000); // reuse toast for error warning visually
                     return;
                 }
                 addToCart(product, selectedSize || 'Standard');
