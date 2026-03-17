@@ -308,6 +308,17 @@
                                     product[header] = val && val !== '' ? val : null;
                                 }
                             });
+
+                            // Optimization for Case Study: Use local representative images if the sheet uses placeholders
+                            if (product.img && (product.img.includes('placeholder') || product.img.includes('picsum.photos'))) {
+                                const cat = (product.category || '').toLowerCase();
+                                if (cat.includes('borkha')) product.img = './images/borkha.jpg';
+                                else if (cat.includes('3-piece') || cat.includes('suit')) product.img = './images/3piece.jpg';
+                                else if (cat.includes('hijab')) product.img = './images/hijab.jpg';
+                                else if (cat.includes('luxury') || cat.includes('gown')) product.img = './images/luxury.jpg';
+                                else product.img = './images/placeholder.jpg';
+                            }
+
                             return product;
                         });
 
