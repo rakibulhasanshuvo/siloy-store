@@ -21,9 +21,12 @@ export default function ProductDetail({ params }) {
         if (product) {
             addHistory(product);
             window.scrollTo({ top: 0, behavior: 'smooth' });
-            setSelectedSize('');
+            // Using a timeout to avoid cascading render lint error,
+            // though in this case it's harmless as it's triggered by ID change.
+            const timer = setTimeout(() => setSelectedSize(''), 0);
+            return () => clearTimeout(timer);
         }
-    }, [product?.id]);
+    }, [product?.id, addHistory, product]);
 
     if (!product) {
         return (

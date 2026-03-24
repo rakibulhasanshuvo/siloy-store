@@ -57,7 +57,7 @@ export const SearchOverlay = () => {
                 {query && results.length === 0 && (
                     <div className="flex flex-col items-center justify-center h-48 text-slate-400">
                         <span className="material-symbols-outlined text-5xl mb-3 opacity-30">search_off</span>
-                        <p className="font-bold">No results found for "{query}"</p>
+                        <p className="font-bold">No results found for &quot;{query}&quot;</p>
                     </div>
                 )}
 
