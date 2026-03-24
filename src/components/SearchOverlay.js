@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 
 export const SearchOverlay = () => {
@@ -64,8 +65,8 @@ export const SearchOverlay = () => {
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-8 animate-[slideInUp_0.3s_ease-out]">
                         {results.map(p => (
                             <div key={p.id} onClick={() => { toggleSearch(); router.push(`/product/${p.id}`); }} className="group cursor-pointer">
-                                <div className="aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3 relative">
-                                    <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                                <div className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3">
+                                    <Image src={p.img || '/images/placeholder.gif'} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized={!p.img || p.img.endsWith('.gif')} />
                                     <div className="absolute inset-0 bg-black/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 </div>
                                 <h4 className="text-sm font-bold line-clamp-1">{p.name}</h4>

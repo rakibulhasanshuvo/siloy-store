@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Layout } from '@/components/Layout';
 
 export default function About() {
@@ -44,8 +45,8 @@ export default function About() {
                     </div>
                     <div className="flex-1 relative">
                         <div className="absolute -inset-4 bg-primary/5 rounded-[3rem] -rotate-3 hidden md:block"></div>
-                        <div className="relative aspect-video md:aspect-[4/5] overflow-hidden rounded-[2.5rem] shadow-2xl border-8 border-white dark:border-slate-800">
-                            <img className="h-full w-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtPB3a1ni-inmU1U5KVkSvHftmBZOeUm7qJGQvVDH_FK58UQg3wDKNSVp_gBEWvq8OnX4BZaGrdYiUdMbmRrrDmb3AX534ur8XDgx6q8AfNF9MesA1LL1-ezxNwX3qF1O4hfKCvODrdd0Y2axDqJXO7jWdKUUP4G32Q67g544isdrehaIV53kg4gdQqY6rMT6mExFsq_v2h0-d2oJKZdA_DzMLDbLWwTMfPKskIFF7eoZaB8vVj7s1svCXnbkh8V6a9ThJ4ad9Vsc" alt="Factory Story" />
+                        <div className="relative aspect-video md:aspect-[4/5] overflow-hidden rounded-3xl shadow-2xl border-8 border-white dark:border-slate-800">
+                            <Image className="object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAtPB3a1ni-inmU1U5KVkSvHftmBZOeUm7qJGQvVDH_FK58UQg3wDKNSVp_gBEWvq8OnX4BZaGrdYiUdMbmRrrDmb3AX534ur8XDgx6q8AfNF9MesA1LL1-ezxNwX3qF1O4hfKCvODrdd0Y2axDqJXO7jWdKUUP4G32Q67g544isdrehaIV53kg4gdQqY6rMT6mExFsq_v2h0-d2oJKZdA_DzMLDbLWwTMfPKskIFF7eoZaB8vVj7s1svCXnbkh8V6a9ThJ4ad9Vsc" alt="Factory Story" fill sizes="(max-width: 768px) 100vw, 50vw" />
                         </div>
                     </div>
                 </div>

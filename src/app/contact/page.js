@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { Layout } from '@/components/Layout';
 import { STORE_CONFIG } from '@/context/AppContext';
 
@@ -57,9 +58,9 @@ export default function Contact() {
                                 <h2 className="text-2xl font-black uppercase tracking-tighter italic">Our <span className="text-primary not-italic">Location</span></h2>
                                 <span className="text-emerald-500 text-xs font-black uppercase tracking-widest px-3 py-1 bg-emerald-50 rounded-full">Open Now</span>
                             </div>
-                            <div className="rounded-[2.5rem] overflow-hidden border-2 border-slate-100 bg-white dark:bg-slate-900 shadow-xl">
+                            <div className="rounded-3xl overflow-hidden border-2 border-slate-100 bg-white dark:bg-slate-900 shadow-xl">
                                 <div className="relative h-64 w-full bg-slate-200">
-                                    <img alt="Map" className="h-full w-full object-cover opacity-80" src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk4nYES556sK-Ro1TNLaPTfttjTYd8Kom3Tidj1uXNIeVc5EV35Q2EcJkq7iaEurY3eJccVI1JRmor3NM89asuRrjMme1Z39zmjxMfJhItWYOZEAnG_oySoSJellIef9MpPO0EkGOQm4ppnR9gRrTJ6DMHrGT37qpJ1ewZRVnw3bxuGWeWJnX1oJ4W_NJquN-kguYk5dfV-YHoGB47TexFbisPF_hNstUkh1jmRwKOEiMc_grgQ8u173rc9_SjCL2jaVvB2K5vDiw" />
+                                    <Image src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk4nYES556sK-Ro1TNLaPTfttjTYd8Kom3Tidj1uXNIeVc5EV35Q2EcJkq7iaEurY3eJccVI1JRmor3NM89asuRrjMme1Z39zmjxMfJhItWYOZEAnG_oySoSJellIef9MpPO0EkGOQm4ppnR9gRrTJ6DMHrGT37qpJ1ewZRVnw3bxuGWeWJnX1oJ4W_NJquN-kguYk5dfV-YHoGB47TexFbisPF_hNstUkh1jmRwKOEiMc_grgQ8u173rc9_SjCL2jaVvB2K5vDiw" alt="Map" fill sizes="(max-width: 768px) 100vw, 50vw" className="object-cover opacity-80" />
                                     <div className="absolute inset-0 flex items-center justify-center"><div className="bg-primary text-white p-4 rounded-2xl shadow-2xl ring-8 ring-white/20"><span className="material-symbols-outlined text-2xl">location_on</span></div></div>
                                 </div>
                                 <div className="p-8">

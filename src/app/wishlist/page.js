@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Layout } from '@/components/Layout';
 
@@ -37,8 +38,8 @@ export default function Wishlist() {
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-8 md:gap-y-12 animate-[fadeIn_0.5s_ease-out]">
                         {wishlist.map(p => (
                             <div key={p.id} className="group flex flex-col pt-2 md:pt-4">
-                                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl md:rounded-[2.5rem] bg-slate-100 dark:bg-slate-800 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2 cursor-pointer" onClick={() => router.push(`/product/${p.id}`)}>
-                                    <img alt={p.name} className="h-full w-full object-cover transition-transform duration-1000 group-hover:scale-110" src={p.img} />
+                                <div className="relative aspect-[3/4] overflow-hidden rounded-2xl md:rounded-3xl bg-slate-100 dark:bg-slate-800 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2 cursor-pointer" onClick={() => router.push(`/product/${p.id}`)}>
+                                    <Image src={p.img || '/images/placeholder.gif'} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-1000 group-hover:scale-110" unoptimized={!p.img || p.img.endsWith('.gif')} />
                                     <button onClick={(e) => { e.stopPropagation(); toggleWishlist(p); }} className="absolute right-4 top-4 flex h-10 w-10 items-center justify-center rounded-2xl bg-white text-primary shadow-lg hover:bg-slate-100 transition-all scale-100 md:scale-0 md:group-hover:scale-100">
                                         <span className="material-symbols-outlined text-xl italic fill-1">favorite</span>
                                     </button>

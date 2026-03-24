@@ -1,6 +1,7 @@
 "use client";
 
 import React from 'react';
+import Image from 'next/image';
 import { useAppContext, STORE_CONFIG } from '@/context/AppContext';
 
 export const CartDrawer = () => {
@@ -38,8 +39,8 @@ export const CartDrawer = () => {
                     ) : (
                         cart.map((item) => (
                             <div key={`${item.id}-${item.size}`} className="flex gap-4 items-center">
-                                <div className="w-20 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
-                                    <img src={item.img} alt={item.name} className="w-full h-full object-cover" />
+                                <div className="relative w-20 h-24 rounded-xl overflow-hidden bg-slate-100 flex-shrink-0">
+                                    <Image src={item.img || '/images/placeholder.gif'} alt={item.name} fill sizes="80px" className="object-cover" unoptimized={!item.img || item.img.endsWith('.gif')} />
                                 </div>
                                 <div className="flex-1">
                                     <h4 className="text-sm font-bold text-slate-900 dark:text-white line-clamp-1">{item.name}</h4>

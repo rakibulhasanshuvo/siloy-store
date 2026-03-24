@@ -3,6 +3,7 @@
 import React from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import Image from 'next/image';
 import { useAppContext } from '@/context/AppContext';
 import { Layout } from '@/components/Layout';
 
@@ -34,7 +35,7 @@ export default function Home() {
             <main className="flex-1 pb-24">
                 <section className="px-4 md:px-8 py-4">
                     <div className="relative rounded-3xl overflow-hidden aspect-[4/5] md:aspect-[21/9] group cursor-pointer shadow-xl" onClick={() => router.push('/shop')}>
-                        <img alt="Hero" className="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" src="/hero.png" />
+                        <Image src="/hero.png" alt="Hero" fill priority sizes="100vw" className="object-cover transition-transform duration-1000 group-hover:scale-110" />
                         <div className="absolute inset-0 bg-gradient-to-t from-black/95 via-black/40 to-transparent flex flex-col justify-end p-6 md:p-16">
                             <div className="md:max-w-3xl space-y-4 md:space-y-6">
                                 <div className="flex items-center gap-2">
@@ -95,7 +96,7 @@ export default function Home() {
                                 <div key={p.id} className="flex flex-col group cursor-pointer" onClick={() => router.push(`/product/${p.id}`)}>
                                     <div className="relative aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden mb-3 bg-slate-100 shadow-sm transition-all duration-500 group-hover:shadow-2xl group-hover:-translate-y-2">
                                         {p.tag && <div className={`absolute top-4 left-4 z-10 rounded-xl ${p.tag === 'Best Seller' || p.tag === 'Premium' ? 'bg-orange-500' : 'bg-primary/95'} px-3 py-1 text-[10px] font-black text-white uppercase tracking-widest shadow-lg`}>{p.tag}</div>}
-                                        <img alt={p.name} className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110" src={p.img} />
+                                        <Image src={p.img || '/images/placeholder.gif'} alt={p.name} fill sizes="(max-width: 768px) 50vw, 25vw" className="object-cover transition-transform duration-700 group-hover:scale-110" unoptimized={!p.img || p.img.endsWith('.gif')} />
                                         <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-500"></div>
                                         <button className="absolute bottom-4 right-4 w-12 h-12 bg-white text-primary rounded-2xl flex items-center justify-center shadow-2xl scale-0 group-hover:scale-100 transition-all duration-300 hover:bg-primary hover:text-white">
                                             <span className="material-symbols-outlined text-2xl">add_shopping_cart</span>

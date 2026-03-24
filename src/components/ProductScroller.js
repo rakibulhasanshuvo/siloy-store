@@ -2,6 +2,7 @@
 
 import React, { useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 
 export const ProductScroller = ({ title, products }) => {
     const router = useRouter();
@@ -32,7 +33,7 @@ export const ProductScroller = ({ title, products }) => {
                 {products.map(p => (
                     <div key={p.id} onClick={() => router.push(`/product/${p.id}`)} className="group cursor-pointer snap-start shrink-0 w-[160px] md:w-[220px]">
                         <div className="aspect-[3/4] rounded-2xl md:rounded-3xl overflow-hidden bg-slate-100 dark:bg-slate-800 mb-3 relative">
-                            <img src={p.img} alt={p.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                            <Image src={p.img || '/images/placeholder.gif'} alt={p.name} fill sizes="(max-width: 768px) 160px, 220px" className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized={!p.img || p.img.endsWith('.gif')} />
                         </div>
                         <h4 className="text-sm font-bold line-clamp-1 dark:text-white px-1">{p.name}</h4>
                         <p className="text-primary font-black px-1">৳{p.price}</p>

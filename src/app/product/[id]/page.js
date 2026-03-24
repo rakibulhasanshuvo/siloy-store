@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, use } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { useAppContext, STORE_CONFIG } from '@/context/AppContext';
 import { Layout } from '@/components/Layout';
 import { ProductScroller } from '@/components/ProductScroller';
@@ -85,11 +86,15 @@ export default function ProductDetail({ params }) {
                 </button>
             </header>
             <main className="pb-32 flex flex-col md:flex-row md:gap-12 md:p-12 animate-[fadeIn_0.5s_ease-out]">
-                <div className="relative w-full md:w-1/2 aspect-[4/5] bg-slate-100 md:rounded-[3rem] overflow-hidden shadow-2xl cursor-crosshair group" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
+                <div className="relative w-full md:w-1/2 aspect-[4/5] bg-slate-100 md:rounded-3xl overflow-hidden shadow-2xl cursor-crosshair group" onMouseMove={handleMouseMove} onMouseLeave={handleMouseLeave}>
                     <div className="flex h-full w-full snap-x snap-mandatory overflow-x-auto hide-scrollbar">
-                        <img src={product.img} alt={product.name} className="w-full h-full object-cover group-hover:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" />
+                        <div className="relative w-full h-full">
+                            <Image src={product.img || '/images/placeholder.gif'} alt={product.name} fill priority sizes="(max-width: 768px) 100vw, 50vw" className="object-cover group-hover:opacity-0 md:group-hover:opacity-100 transition-opacity duration-300" unoptimized={!product.img || product.img.endsWith('.gif')} />
+                        </div>
                         <div className="hidden md:block absolute inset-0 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" style={magnifyStyle}></div>
-                        <img src={product.img} alt={product.name} className="md:hidden absolute inset-0 w-full h-full object-cover" />
+                        <div className="md:hidden absolute inset-0 w-full h-full">
+                            <Image src={product.img || '/images/placeholder.gif'} alt={product.name} fill priority sizes="100vw" className="object-cover" unoptimized={!product.img || product.img.endsWith('.gif')} />
+                        </div>
                     </div>
                     <div className="absolute top-8 right-8 z-20 bg-primary text-white text-[10px] font-black tracking-[0.2em] px-6 py-3 rounded-2xl shadow-2xl uppercase italic">Factory Price</div>
                     {product.tag && (
