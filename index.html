@@ -730,7 +730,7 @@
 
         const HomeScreen = () => {
             const navigate = useNavigate();
-            const { products, toggleSearch, isLoading, error } = useAppContext();
+            const { products, toggleSearch, isLoading } = useAppContext();
             return (
                 <Layout>
                     <header className="sticky top-0 z-50 bg-white/80 dark:bg-background-dark/80 backdrop-blur-md px-4 md:px-8 pt-4 pb-2 border-b border-primary/10 md:hidden">
@@ -869,7 +869,7 @@
 
         const ShopScreen = () => {
             const navigate = useNavigate();
-            const { products, toggleCart, cartCount, toggleSearch, toggleWishlist, wishlist, recentlyViewed, isLoading, error } = useAppContext();
+            const { products, toggleCart, cartCount, toggleSearch, toggleWishlist, wishlist, recentlyViewed, isLoading } = useAppContext();
             const [filter, setFilter] = useState('All');
             const [search, setSearch] = useState('');
             const [sortBy, setSortBy] = useState('popularity');
