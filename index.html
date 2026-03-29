@@ -216,6 +216,16 @@
             { id: 6, name: 'Embroidered Party Gown', category: 'luxury', price: 5200, oldPrice: 6500, img: 'https://images.unsplash.com/photo-1490481651871-ab68de25d43d?w=400&h=500&fit=crop', tag: 'Premium', sku: 'GW-500', rating: 4.9, reviews: 22, description: 'Heavy zari embroidery on rich georgette fabric. Perfect for weddings and grand occasions.', sizes: ['38', '40', '42', '44'] }
         ];
 
+        // Pure function for testing cart quantity updates
+        const updateCartItemQuantity = (cart, id, size, change) => {
+            return cart.map(item => {
+                if (item.id === id && item.size === size) {
+                    return { ...item, qty: item.qty + change };
+                }
+                return item;
+            }).filter(item => item.qty > 0);
+        };
+
         const AppProvider = ({ children }) => {
             const [products, setProducts] = useState(productsData); // Default fallback
             const [isLoading, setIsLoading] = useState(true);
@@ -340,15 +350,7 @@
             };
 
             const updateQuantity = (id, size, change) => {
-                setCart(prev => {
-                    return prev.map(item => {
-                        if (item.id === id && item.size === size) {
-                            const newQty = item.qty + change;
-                            return { ...item, qty: newQty };
-                        }
-                        return item;
-                    }).filter(item => item.qty > 0);
-                });
+                setCart(prev => updateCartItemQuantity(prev, id, size, change));
             };
 
             const toggleCart = () => setIsCartOpen(!isCartOpen);
