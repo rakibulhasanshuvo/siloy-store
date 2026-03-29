@@ -137,6 +137,7 @@
     <script src="https://unpkg.com/react-router@6.3.0/umd/react-router.production.min.js"></script>
     <script src="https://unpkg.com/react-router-dom@6.3.0/umd/react-router-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="whatsappUtils.js"></script>
 </head>
 
 <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-slate-100">
@@ -611,13 +612,7 @@
             if (!isCartOpen) return null;
 
             const formatWhatsAppOrder = () => {
-                let msg = `Hi ${STORE_CONFIG.STORE_NAME}! I would like to order:\n\n`;
-                cart.forEach(item => {
-                    msg += `- ${item.name} (SKU: ${item.sku})\n  Size: ${item.size} | Qty: ${item.qty} | ৳${item.price * item.qty}\n`;
-                });
-                msg += `\n*Total: ৳${cartTotal}*\n\nPlease confirm availability.`;
-                const cleanNum = STORE_CONFIG.WHATSAPP_NUMBER.replace('+', '');
-                return `https://wa.me/${cleanNum}?text=${encodeURIComponent(msg)}`;
+                return formatWhatsAppOrderUrl(cart, cartTotal, STORE_CONFIG);
             };
 
             return (
