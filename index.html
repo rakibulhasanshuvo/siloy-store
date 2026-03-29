@@ -1018,7 +1018,7 @@
         const ProductDetailScreen = () => {
             const { id } = useParams();
             const navigate = useNavigate();
-            const { products, addToCart, cartCount, toggleCart, wishlist, toggleWishlist, addHistory, recentlyViewed, isCartPopping } = useAppContext();
+            const { products, addToCart, cartCount, toggleCart, wishlist, toggleWishlist, addHistory, isCartPopping } = useAppContext();
             const [selectedSize, setSelectedSize] = useState('');
             const [toastState, setToastState] = useState(null); // 'error' or 'success'
             const [magnifyStyle, setMagnifyStyle] = useState({ display: 'none' });
