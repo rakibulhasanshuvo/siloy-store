@@ -896,7 +896,7 @@
                 return () => document.removeEventListener('mousedown', handleClickOutside);
             }, []);
 
-            const categories = ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))];
+            const categories = useMemo(() => ['All', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))], [products]);
 
             const displayProducts = products.filter(p => {
                 const matchesFilter = filter === 'All' || (p?.category || '').toLowerCase().replace(/[\s-]/g, '') === filter.toLowerCase().replace(/[\s-]/g, '');
