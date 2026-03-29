@@ -133,6 +133,19 @@
     </style>
 
     <!-- React and Dependencies -->
+    <script>
+        const cartLogic = {
+            updateQuantity: (prev, id, size, change) => {
+                return prev.map(item => {
+                    if (item.id === id && item.size === size) {
+                        const newQty = item.qty + change;
+                        return { ...item, qty: newQty };
+                    }
+                    return item;
+                }).filter(item => item.qty > 0);
+            }
+        };
+    </script>
     <script src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
     <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/history@5/umd/history.production.min.js"></script>
@@ -340,15 +353,7 @@
             };
 
             const updateQuantity = (id, size, change) => {
-                setCart(prev => {
-                    return prev.map(item => {
-                        if (item.id === id && item.size === size) {
-                            const newQty = item.qty + change;
-                            return { ...item, qty: newQty };
-                        }
-                        return item;
-                    }).filter(item => item.qty > 0);
-                });
+                setCart(prev => cartLogic.updateQuantity(prev, id, size, change));
             };
 
             const toggleCart = () => setIsCartOpen(!isCartOpen);
