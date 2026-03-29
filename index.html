@@ -145,7 +145,7 @@
     <div id="root"></div>
 
     <script type="text/babel">
-        const { useState, useEffect, useContext, createContext, useRef, useMemo } = React;
+        const { useState, useEffect, useContext, createContext, useRef, useMemo, useCallback } = React;
         const { createRoot } = ReactDOM;
         const { HashRouter, Routes, Route, Link, useNavigate, useLocation, useParams } = ReactRouterDOM;
 
@@ -321,7 +321,7 @@
                 fetchProducts();
             }, []);
 
-            const addToCart = (product, size, qty = 1) => {
+            const addToCart = useCallback((product, size, qty = 1) => {
                 setCart(prev => {
                     const existing = prev.find(item => item.id === product.id && item.size === size);
                     if (existing) {
@@ -333,13 +333,13 @@
                 setIsCartOpen(true);
                 setIsCartPopping(true);
                 setTimeout(() => setIsCartPopping(false), 400);
-            };
+            }, []);
 
-            const removeFromCart = (id, size) => {
+            const removeFromCart = useCallback((id, size) => {
                 setCart(prev => prev.filter(item => !(item.id === id && item.size === size)));
-            };
+            }, []);
 
-            const updateQuantity = (id, size, change) => {
+            const updateQuantity = useCallback((id, size, change) => {
                 setCart(prev => {
                     return prev.map(item => {
                         if (item.id === id && item.size === size) {
@@ -349,31 +349,31 @@
                         return item;
                     }).filter(item => item.qty > 0);
                 });
-            };
+            }, []);
 
-            const toggleCart = () => setIsCartOpen(!isCartOpen);
+            const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
             const cartTotal = useMemo(() => cart.reduce((sum, item) => sum + (item.price * item.qty), 0), [cart]);
             const cartCount = useMemo(() => cart.reduce((sum, item) => sum + item.qty, 0), [cart]);
 
             // New Advanced Methods
-            const toggleWishlist = (product) => {
+            const toggleWishlist = useCallback((product) => {
                 setWishlist(prev => {
                     if (prev.find(p => p.id === product.id)) {
                         return prev.filter(p => p.id !== product.id);
                     }
                     return [...prev, product];
                 });
-            };
+            }, []);
 
-            const addHistory = (product) => {
+            const addHistory = useCallback((product) => {
                 setRecentlyViewed(prev => {
                     const filtered = prev.filter(p => p.id !== product.id);
                     return [product, ...filtered].slice(0, 10); // Keep last 10
                 });
-            };
+            }, []);
 
-            const toggleSearch = () => setIsSearchOpen(!isSearchOpen);
+            const toggleSearch = useCallback(() => setIsSearchOpen(prev => !prev), []);
 
             // Load saved data on mount (with error handling for corrupted JSON)
             useEffect(() => {
@@ -400,16 +400,26 @@
             }, [wishlist, recentlyViewed, cart]);
 
 
+            const contextValue = useMemo(() => ({
+                products, isLoading, error,
+                cart, cartTotal, cartCount, addToCart, removeFromCart, updateQuantity,
+                isCartOpen, toggleCart, setIsCartOpen,
+                wishlist, setWishlist, toggleWishlist,
+                recentlyViewed, addHistory,
+                isSearchOpen, toggleSearch, setIsSearchOpen,
+                isCartPopping
+            }), [
+                products, isLoading, error,
+                cart, cartTotal, cartCount, addToCart, removeFromCart, updateQuantity,
+                isCartOpen, toggleCart, setIsCartOpen,
+                wishlist, setWishlist, toggleWishlist,
+                recentlyViewed, addHistory,
+                isSearchOpen, toggleSearch, setIsSearchOpen,
+                isCartPopping
+            ]);
+
             return (
-                <AppContext.Provider value={{
-                    products, isLoading, error,
-                    cart, cartTotal, cartCount, addToCart, removeFromCart, updateQuantity,
-                    isCartOpen, toggleCart, setIsCartOpen,
-                    wishlist, setWishlist, toggleWishlist,
-                    recentlyViewed, addHistory,
-                    isSearchOpen, toggleSearch, setIsSearchOpen,
-                    isCartPopping
-                }}>
+                <AppContext.Provider value={contextValue}>
                     {children}
                 </AppContext.Provider>
             );
