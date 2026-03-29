@@ -1026,6 +1026,11 @@
 
             const product = products.find(p => String(p.id) === String(id));
 
+            const relatedProducts = useMemo(() => {
+                if (!product) return [];
+                return products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4);
+            }, [products, product]);
+
             useEffect(() => {
                 if (product) {
                     addHistory(product);
@@ -1199,7 +1204,7 @@
 
                     {/* Desktop "You Might Also Like" section */}
                     <div className="hidden md:block max-w-7xl mx-auto px-12 mb-24">
-                        <ProductScroller title="You Might Also Like" products={products.filter(p => p.category === product.category && p.id !== product.id).slice(0, 4)} />
+                        <ProductScroller title="You Might Also Like" products={relatedProducts} />
                     </div>
 
                     <div className="fixed bottom-0 left-1/2 -translate-x-1/2 w-full max-w-[430px] md:hidden bg-white/95 dark:bg-background-dark/95 backdrop-blur-md border-t border-slate-100 dark:border-slate-800 p-4 pb-8 z-50">
